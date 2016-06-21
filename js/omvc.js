@@ -104,7 +104,7 @@ function OMVC() {
 
 	var recording = false;
 	
-	var server_url = window.location.href;
+	var server_url = window.location.href.split('?')[0];
 	
 	var fov = 60;
 
@@ -123,6 +123,25 @@ function OMVC() {
 
 			self.setOperationMode("dive");
 			self.animate(0);
+			
+			if(query['view-offset']) {
+				var split_values = query['view-offset'].split(',');
+				viewOffset.Roll = Number(split_values[0]);
+				viewOffset.Pitch = Number(split_values[1]);
+				viewOffset.Yaw = Number(split_values[2]);
+			}
+			if(query['fov']) {
+				fov = Number(query['fov']);
+				self.omvr.setFov(fov);
+			}
+			if(query['auto-scroll'] == 'on') {
+				setInterval(function(){					
+					viewOffset.Yaw += fov/100;
+				},100);
+			}
+			if(query['check-image-delay']) {
+				self.omvr.checkImageDelay = Number(query['check-image-delay']);
+			}			
 			
 			var _fov = 70;
 			function gestureStartHandler(e) {
@@ -164,6 +183,9 @@ function OMVC() {
 				defaultImageUrl = query['default-image-url'];
 				imageUrl = "";
 			}
+			if(query['image-url']) {
+				imageUrl = query['image-url'];
+			}
 			var requestAttitude = false;
 			var canvas = document.getElementById('vrCanvas');
 			self.omvr.init(canvas);
@@ -179,6 +201,7 @@ function OMVC() {
 				socket = io.connect(server_url);
 				// サーバから受け取るイベント
 				socket.on('connect', function() {
+					self.omvr.checkImageLastUpdate = false;
 					setInterval(function() {
 						var _starttime = new Date();
 						console.log('ping!!');
